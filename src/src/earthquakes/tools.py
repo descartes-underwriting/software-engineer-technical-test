@@ -1,0 +1,8 @@
+EARTH_RADIUS = 6378
+
+TIME_COLUMN = "time"
+PAYOUT_COLUMN = "payout"
+MAGNITUDE_COLUMN = "mag"
+DISTANCE_COLUMN = "distance"
+LATITUDE_COLUMN = "latitude"
+LONGITUDE_COLUMN = "longitude"

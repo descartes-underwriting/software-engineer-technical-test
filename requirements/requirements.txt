@@ -1,0 +1,7 @@
+pandas
+numpy
+ipykernel
+pytest
+matplotlib
+asyncio
+aiohttp
