@@ -3,7 +3,7 @@ from pathlib import Path
 
 SRC_DIR = "src"
 
-package_name = Path.cwd().parts[-1]
+package_name = "earthquakes"
 
 
 def get_long_description(filename="README.md"):
