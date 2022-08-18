@@ -16,3 +16,4 @@ Especially:
 * <https://github.com/f-combes>
 * <https://github.com/mdeboc>
 * <https://github.com/michruggeri>
+* <https://github.com/cedricadam2>
