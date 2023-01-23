@@ -17,4 +17,3 @@ Especially:
 * <https://github.com/mdeboc>
 * <https://github.com/michruggeri>
 * <https://github.com/cedricadam2>
-* <https://github.com/bpeyrouBDHIS>
