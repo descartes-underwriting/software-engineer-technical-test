@@ -13,6 +13,8 @@ Access should be granted to all members of the [descartes-underwriting group](ht
 Especially:
 
 * <https://github.com/alexandreCameron>
+* <https://github.com/mt94>
+* <https://github.com/thmsbernardi>
 * <https://github.com/f-combes>
 * <https://github.com/mdeboc>
 * <https://github.com/michruggeri>
