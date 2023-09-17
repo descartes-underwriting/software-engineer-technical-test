@@ -1,0 +1,20 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "[python]": {
+            "editor.defaultFormatter": "ms-python.black-formatter"
+        },
+        "python.formatting.provider": "black",
+        "cSpell.words": [
+            "USGS",
+            "km",
+            "radius",
+            "max"
+        ],
+        "cSpell.allowCompoundWords": true
+    }
+}
