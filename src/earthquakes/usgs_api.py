@@ -1,8 +1,19 @@
 from typing import Optional
 from math import isclose
-from urllib.request import Request
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode, urljoin
 from datetime import datetime
 import pandas as pd
+import csv
+
+from earthquakes.tools import (
+    TIME_COLUMN,
+    PAYOUT_COLUMN,
+    MAGNITUDE_COLUMN,
+    DISTANCE_COLUMN,
+    LATITUDE_COLUMN,
+    LONGITUDE_COLUMN,
+)
 
 # Earthquake data
 
@@ -40,7 +51,11 @@ def value_in_range(value: float, min_val: float, max_val: float) -> bool:
 
 
 def build_api_url(
-    latitude: float, longitude: float, radius: float
+    latitude: float,
+    longitude: float,
+    radius: float,
+    start_date: datetime,
+    min_magnitude: float,
 ) -> Optional[Request]:
     """
     A function to build the API URL for calling Earthquake Catalog API.
@@ -87,14 +102,19 @@ def build_api_url(
     # build parameters
     params = {
         "format": "csv",
-        "endtime": "21-10-2021",  # TODO: this need to be checked
+        # "endtime": "2021-10-21",
+        "starttime": start_date.isoformat(),
         "latitude": str(latitude),
         "longitude": str(longitude),
         "maxradiuskm": str(radius),
+        # "minmagnitude": str(min_magnitude),
         "eventtype": "earthquake",
     }
 
-    request = Request(url=API_URL + API_METHOD, data=params, method="GET")
+    url_params = urlencode(params)
+    full_url = urljoin(API_URL, API_METHOD) + "?" + url_params
+
+    request = Request(url=full_url, method="GET")
 
     return request
 
@@ -104,7 +124,7 @@ def get_earthquake_data(
     longitude: float,
     radius: float,
     minimum_magnitude: float,
-    end_date: datetime,
+    end_date: datetime.date,
 ) -> pd.DataFrame:
     """
     Generate a function comment for the given function body in a markdown code block with the correct language syntax.
@@ -117,13 +137,63 @@ def get_earthquake_data(
         end_date (datetime): The end date of the data in the format "YYYY-MM-DD".
 
     Returns:
-        pd.DataFrame: The result of the API call packaged as pandas DataFrame or None in case of error
+        pd.DataFrame: The result of the API call packaged as pandas DataFrame.
     """
 
-    request = build_api_url(latitude=latitude, longitude=longitude, radius=radius)
+    request = build_api_url(
+        latitude=latitude,
+        longitude=longitude,
+        radius=radius,
+        start_date=end_date,
+        min_magnitude=minimum_magnitude,
+    )
 
     if request is None:
         return pd.DataFrame()
 
-    df = pd.DataFrame()
+    try:
+        DATA_ENCODING = "utf-8"
+        response = urlopen(request)
+
+        # urlopen will not return the whole data in one go.
+        # Get the first line as it contains the column headers
+        columns = response.readline().decode(DATA_ENCODING).strip().split(",")
+
+        lines_of_series = []
+
+        # Process the remaining lines of data and add them to the data frame
+        for line in response:
+            csv_reader = csv.reader(
+                [line.decode(DATA_ENCODING)],
+                lineterminator="\n",
+                quotechar='"',
+                delimiter=",",
+                quoting=csv.QUOTE_MINIMAL,
+                skipinitialspace=True,
+            )
+
+            for row in csv_reader:
+                lines_of_series.append(pd.Series(row, index=columns))
+
+        df = pd.DataFrame(lines_of_series, columns=columns)
+
+        response.close()
+
+        # Convert data type for some of the columns
+
+        df[TIME_COLUMN] = pd.to_datetime(df[TIME_COLUMN])
+
+        FLOAT_COLUMNS = [
+            MAGNITUDE_COLUMN,
+            LATITUDE_COLUMN,
+            LONGITUDE_COLUMN,
+        ]
+        df[FLOAT_COLUMNS] = df[FLOAT_COLUMNS].astype(float)
+
+    except Exception as e:
+        # TODO: targeted exception handling
+        # TODO: logging the exception for debugging: log.debug ...
+        print(f"An error occurred: {e}")
+        return pd.DataFrame()
+
     return df
