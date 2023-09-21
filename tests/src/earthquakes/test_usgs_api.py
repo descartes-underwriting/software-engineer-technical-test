@@ -60,10 +60,11 @@ def test_valid_parameters(valid_parameters: tuple) -> None:
 
     assert parse_qs(parse_result.query) == {
         "format": ["csv"],
-        "endtime": ["21-10-2021"],
+        "endtime": [end_date.isoformat()],
         "latitude": [str(latitude)],
         "longitude": [str(longitude)],
         "maxradiuskm": [str(radius)],
+        "minmagnitude": [str(minimum_magnitude)],
         "eventtype": ["earthquake"],
     }
     assert result.method == "GET"
