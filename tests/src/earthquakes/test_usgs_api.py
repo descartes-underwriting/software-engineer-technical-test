@@ -1,5 +1,6 @@
 import pytest
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from urllib.error import URLError
 from urllib.request import Request
 from urllib.parse import urlparse, parse_qs
@@ -58,8 +59,11 @@ def test_valid_parameters(valid_parameters: tuple) -> None:
 
     parse_result = urlparse(result.full_url)
 
+    start_date = end_date - relativedelta(years=200)
+
     assert parse_qs(parse_result.query) == {
         "format": ["csv"],
+        "starttime": [start_date.isoformat()],
         "endtime": [end_date.isoformat()],
         "latitude": [str(latitude)],
         "longitude": [str(longitude)],

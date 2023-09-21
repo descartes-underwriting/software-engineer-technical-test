@@ -2,6 +2,7 @@ from typing import Optional
 from math import isclose
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode, urljoin
+from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import pandas as pd
 import csv
@@ -99,11 +100,14 @@ def build_api_url(
         # TODO: add logging
         return None
 
+    # Get the data for the last 200 years
+    start_date = end_date - relativedelta(years=200)
+
     # build parameters
     params = {
         "format": "csv",
         "endtime": end_date.isoformat(),
-        # "starttime": # TODO: What should be the start date? Leave the default
+        "starttime": start_date.isoformat(),
         "latitude": str(latitude),
         "longitude": str(longitude),
         "maxradiuskm": str(radius),
