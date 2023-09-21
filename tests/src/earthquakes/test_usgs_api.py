@@ -7,26 +7,50 @@ from earthquakes.usgs_api import build_api_url, get_earthquake_data
 
 
 @pytest.fixture
-def valid_parameters():
-    return (37.7749, -122.4194, 100)
+def valid_parameters() -> tuple:
+    """
+    Generates a fixture that returns valid parameters for testing.
+
+    Returns:
+        Tuple: A tuple containing the latitude, longitude, radius, max distance, and date for testing.
+    """
+    return (37.7749, -122.4194, 100.0, 5.0, datetime(2022, 1, 1))
 
 
 @pytest.fixture
-def invalid_parameters():
-    return (100, -200, 30000)
+def invalid_parameters() -> tuple:
+    """
+    A fixture that returns a tuple of invalid parameters.
+
+    Returns:
+        tuple: A tuple containing invalid parameters.
+    """
+    return (100, -200, 30000, -1, datetime(1877, 1, 1))
 
 
-@pytest.fixture
-def test_data(valid_parameters):
-    latitude, longitude, radius = valid_parameters
-    minimum_magnitude = 5.0
-    end_date = datetime(2022, 1, 1)
-    return (latitude, longitude, radius, minimum_magnitude, end_date)
+def test_valid_parameters(valid_parameters: tuple) -> None:
+    """
+    Test the validity of the given parameters for the build_api_url function.
 
+    Args:
+        valid_parameters (tuple): A tuple containing the latitude, longitude, radius, minimum_magnitude, and end_date.
 
-def test_valid_parameters(valid_parameters):
-    latitude, longitude, radius = valid_parameters
-    result = build_api_url(latitude, longitude, radius)
+    Returns:
+        None: This function does not return anything.
+
+    Raises:
+        AssertionError: If the result is not an instance of Request or the full_url does not start with
+        "https://earthquake.usgs.gov/fdsnws/event/1/query".
+        AssertionError: If the parsed query string does not match the expected values.
+    """
+    latitude, longitude, radius, minimum_magnitude, end_date = valid_parameters
+    result = build_api_url(
+        latitude=latitude,
+        longitude=longitude,
+        radius=radius,
+        min_magnitude=minimum_magnitude,
+        end_date=end_date,
+    )
     assert isinstance(result, Request)
     assert result.full_url.startswith(
         "https://earthquake.usgs.gov/fdsnws/event/1/query"
@@ -46,8 +70,28 @@ def test_valid_parameters(valid_parameters):
 
 
 def test_invalid_parameters(invalid_parameters):
-    latitude, longitude, radius = invalid_parameters
-    result = build_api_url(latitude, longitude, radius)
+    """
+    Test the behavior of the function when invalid parameters are provided.
+    TODO: test each parameter by making just one of the paraneters invalid
+
+    Args:
+        invalid_parameters (tuple): A tuple containing the latitude, longitude, radius,
+            minimum_magnitude, and end_date parameters.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the result of build_api_url is not None.
+    """
+    latitude, longitude, radius, minimum_magnitude, end_date = invalid_parameters
+    result = build_api_url(
+        latitude=latitude,
+        longitude=longitude,
+        radius=radius,
+        min_magnitude=minimum_magnitude,
+        end_date=end_date,
+    )
     assert result is None
 
 

@@ -83,9 +83,7 @@ def get_haversine_distance(
     return ret
 
 
-def compute_payouts(
-    earthquake_data: pd.DataFrame, payout_structure: list(dict)
-) -> pd.Series:
+def compute_payouts(earthquake_data: pd.DataFrame, payout_structure: list) -> pd.Series:
     pass
 
 

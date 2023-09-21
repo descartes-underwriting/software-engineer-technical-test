@@ -54,7 +54,7 @@ def build_api_url(
     latitude: float,
     longitude: float,
     radius: float,
-    start_date: datetime,
+    end_date: datetime,
     min_magnitude: float,
 ) -> Optional[Request]:
     """
@@ -102,12 +102,12 @@ def build_api_url(
     # build parameters
     params = {
         "format": "csv",
-        # "endtime": "2021-10-21",
-        "starttime": start_date.isoformat(),
+        "endtime": end_date.isoformat(),
+        # "starttime": # TODO: What should be the start date? Leave the default
         "latitude": str(latitude),
         "longitude": str(longitude),
         "maxradiuskm": str(radius),
-        # "minmagnitude": str(min_magnitude),
+        "minmagnitude": str(min_magnitude),
         "eventtype": "earthquake",
     }
 
@@ -144,7 +144,7 @@ def get_earthquake_data(
         latitude=latitude,
         longitude=longitude,
         radius=radius,
-        start_date=end_date,
+        end_date=end_date,
         min_magnitude=minimum_magnitude,
     )
 
