@@ -128,5 +128,9 @@ def compute_payouts(
     return payouts
 
 
-def compute_burning_cost(payouts: pd.Series, start_year: int, end_year: int):
-    pass
+def compute_burning_cost(
+    payouts: pd.DataFrame, start_year: int, end_year: int
+) -> float:
+    df = payouts.loc[start_year:end_year] / 100.0
+
+    return df.mean()
