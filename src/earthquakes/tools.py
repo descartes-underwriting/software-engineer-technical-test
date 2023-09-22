@@ -83,9 +83,7 @@ def get_haversine_distance(
     return ret
 
 
-def compute_payouts(
-    earthquake_data: pd.DataFrame, payout_structure: list
-) -> pd.DataFrame:
+def compute_payouts(earthquake_data: pd.DataFrame, payout_structure: list) -> pd.Series:
     """
     Compute payouts based on earthquake data and a payout structure.
 
@@ -94,7 +92,7 @@ def compute_payouts(
     - payout_structure (list): A list defining the payout structure.
 
     Returns:
-    - pd.DataFrame: A DataFrame containing the computed payouts per year.
+    - pd.Series: A Series containing the computed payouts per year.
     """
 
     # order the data by event time
@@ -124,13 +122,22 @@ def compute_payouts(
     # Select just maximum payout per year
     payouts = payouts.groupby(TIME_COLUMN)["potential_payout"].max()
 
-    # Return data has a 2 column dataframe
+    # Return data is a series where the index is the year
     return payouts
 
 
-def compute_burning_cost(
-    payouts: pd.DataFrame, start_year: int, end_year: int
-) -> float:
+def compute_burning_cost(payouts: pd.Series, start_year: int, end_year: int) -> float:
+    """
+    Compute the burning cost for a given range of years.
+
+    Args:
+        payouts (pd.Series): A series of payouts with the year as index
+        start_year (int): The start year of the range.
+        end_year (int): The end year of the range.
+
+    Returns:
+        float: The average burning cost for the given range of years.
+    """
     df = payouts.loc[start_year:end_year] / 100.0
 
     return df.mean()
