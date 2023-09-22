@@ -5,6 +5,7 @@ from urllib.parse import urlencode, urljoin
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import pandas as pd
+import numpy as np
 import csv
 
 from earthquakes.tools import (
@@ -192,7 +193,7 @@ def get_earthquake_data(
             LATITUDE_COLUMN,
             LONGITUDE_COLUMN,
         ]
-        df[FLOAT_COLUMNS] = df[FLOAT_COLUMNS].astype(float)
+        df[FLOAT_COLUMNS] = df[FLOAT_COLUMNS].astype(np.float64)
 
     except Exception as e:
         # TODO: targeted exception handling
@@ -201,3 +202,18 @@ def get_earthquake_data(
         return pd.DataFrame()
 
     return df
+
+
+# Large asset portfolio - async requests
+
+# Our client also whishes to cover a large amount of properties all over Europe.
+
+# In order to speed-up the requests to the USGS API, in the module `earthquakes.usgs_api`:
+# - Implement the `async` function `get_earthquake_data_for_multiple_locations`,
+# - The implementation should use the `asyncio` and `aiohttp` libraries,
+# - The solution should re-use some of the functions already written,
+# - Tests are not required for any of the functions.
+
+
+def get_earthquake_data_for_multiple_locations():
+    pass

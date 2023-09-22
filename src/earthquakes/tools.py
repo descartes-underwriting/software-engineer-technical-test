@@ -83,9 +83,50 @@ def get_haversine_distance(
     return ret
 
 
-def compute_payouts(earthquake_data: pd.DataFrame, payout_structure: list) -> pd.Series:
-    pass
+def compute_payouts(
+    earthquake_data: pd.DataFrame, payout_structure: list
+) -> pd.DataFrame:
+    """
+    Compute payouts based on earthquake data and a payout structure.
+
+    Parameters:
+    - earthquake_data (pd.DataFrame): A DataFrame containing earthquake data.
+    - payout_structure (list): A list defining the payout structure.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing the computed payouts per year.
+    """
+
+    # order the data by event time
+
+    df = earthquake_data[[TIME_COLUMN, MAGNITUDE_COLUMN, DISTANCE_COLUMN]].sort_values(
+        by=TIME_COLUMN
+    )
+
+    # Compute potential payout per event
+    # Initialize the payout column to 0
+    df["potential_payout"] = 0
+
+    for payout in payout_structure:
+        payout_column = (df[MAGNITUDE_COLUMN] >= payout["magnitude"]).astype(int)
+        payout_column *= (df[DISTANCE_COLUMN] <= payout["radius"]).astype(int)
+        payout_column *= payout["payout"]
+
+        df["potential_payout"] = np.maximum(df["potential_payout"], payout_column)
+
+    # Select only payouts greater than 0
+    payouts = df[[TIME_COLUMN, "potential_payout"]][df["potential_payout"] > 0]
+
+    # Convert the TIME_COLUMN to just the year
+
+    payouts[TIME_COLUMN] = pd.to_datetime(payouts[TIME_COLUMN]).dt.year
+
+    # Select just maximum payout per year
+    payouts = payouts.groupby(TIME_COLUMN)["potential_payout"].max()
+
+    # Return data has a 2 column dataframe
+    return payouts
 
 
-def compute_burning_cost():
+def compute_burning_cost(payouts: pd.Series, start_year: int, end_year: int):
     pass
