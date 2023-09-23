@@ -167,39 +167,16 @@ def get_earthquake_data(
         response = urlopen(request)
 
         # urlopen will not return the whole data in one go.
-        # Get the first line as it contains the column headers
-        columns = response.readline().decode(DATA_ENCODING).strip().split(",")
 
-        lines_of_series = []
+        csv_data = ""
 
-        # Process the remaining lines of data and add them to the data frame
         for line in response:
-            csv_reader = csv.reader(
-                [line.decode(DATA_ENCODING)],
-                lineterminator="\n",
-                quotechar='"',
-                delimiter=",",
-                quoting=csv.QUOTE_MINIMAL,
-                skipinitialspace=True,
-            )
-
-            for row in csv_reader:
-                lines_of_series.append(pd.Series(row, index=columns))
-
-        df = pd.DataFrame(lines_of_series, columns=columns)
+            csv_data += line.decode(DATA_ENCODING)
 
         response.close()
 
-        # Convert data type for some of the columns
-
-        df[TIME_COLUMN] = pd.to_datetime(df[TIME_COLUMN])
-
-        FLOAT_COLUMNS = [
-            MAGNITUDE_COLUMN,
-            LATITUDE_COLUMN,
-            LONGITUDE_COLUMN,
-        ]
-        df[FLOAT_COLUMNS] = df[FLOAT_COLUMNS].astype(np.float64)
+        # Convert the csv data to a pandas dataframe
+        df = pd.read_csv(io.StringIO(csv_data), header=0)
 
     except Exception as e:
         # TODO: targeted exception handling
@@ -259,9 +236,7 @@ async def get_earthquake_data_for_location(
             csv_data = await response.text(encoding=DATA_ENCODING)
 
             # Convert the csv data to a pandas dataframe
-            df = pd.read_csv(
-                io.StringIO(csv_data),
-            )
+            df = pd.read_csv(io.StringIO(csv_data))
 
             return df
 
