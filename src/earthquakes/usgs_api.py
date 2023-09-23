@@ -1,7 +1,10 @@
+import asyncio
+from io import StringIO
 from typing import Optional
 from math import isclose
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode, urljoin
+import aiohttp
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import pandas as pd
@@ -16,6 +19,9 @@ from earthquakes.tools import (
     LATITUDE_COLUMN,
     LONGITUDE_COLUMN,
 )
+
+
+DATA_ENCODING = "utf-8"
 
 # Earthquake data
 
@@ -157,7 +163,6 @@ def get_earthquake_data(
         return pd.DataFrame()
 
     try:
-        DATA_ENCODING = "utf-8"
         response = urlopen(request)
 
         # urlopen will not return the whole data in one go.
@@ -215,5 +220,111 @@ def get_earthquake_data(
 # - Tests are not required for any of the functions.
 
 
-def get_earthquake_data_for_multiple_locations():
-    pass
+async def get_earthquake_data_for_location(
+    latitude: float,
+    longitude: float,
+    radius: float,
+    minimum_magnitude: float,
+    end_date: datetime,
+) -> pd.DataFrame:
+    """
+    Retrieves earthquake data asynchronously for a given location within a specified radius and minimum magnitude.
+
+    Parameters:
+        latitude (float): The latitude of the location.
+        longitude (float): The longitude of the location.
+        radius (float): The radius within which to search for earthquakes.
+        minimum_magnitude (float): The minimum magnitude of the earthquakes.
+        end_date (datetime): The end date of the search.
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the retrieved earthquake data.
+    """
+    request = build_api_url(
+        latitude=latitude,
+        longitude=longitude,
+        radius=radius,
+        end_date=end_date,
+        min_magnitude=minimum_magnitude,
+    )
+
+    if request is None:
+        return pd.DataFrame()
+
+    url = request.full_url
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            csv_data = await response.text(encoding=DATA_ENCODING)
+
+            # Convert the csv data to a pandas dataframe
+            df = pd.read_csv(
+                StringIO.StringIO(csv_data),
+            )
+
+            df.print()
+
+            return df
+
+
+async def get_earthquake_data_for_multiple_locations_async(
+    assets: pd.DataFrame, radius: float, minimum_magnitude: float, end_date: datetime
+) -> pd.DataFrame:
+    """
+    Retrieves earthquake data for multiple locations asynchronously.
+
+    Args:
+        assets (pd.DataFrame): A DataFrame containing asset information.
+        radius (float): The radius within which to search for earthquakes.
+        minimum_magnitude (float): The minimum magnitude of earthquakes to retrieve.
+        end_date (datetime): The end date for the earthquake data retrieval.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the earthquake data for the specified locations.
+    """
+    location_requests = []
+
+    for asset in assets.itertuples():
+        location_requests.append(
+            get_earthquake_data_for_location(
+                latitude=asset.latitude,
+                longitude=asset.longitude,
+                radius=radius,
+                minimum_magnitude=minimum_magnitude,
+                end_date=end_date,
+            )
+        )
+
+        asyncio.wait(location_requests)
+
+        return pd.concat(location_requests)
+
+
+def get_earthquake_data_for_multiple_locations(
+    assets: pd.DataFrame, radius: float, minimum_magnitude: float, end_date: datetime
+) -> pd.DataFrame:
+    """
+    Get earthquake data for multiple locations.
+
+    Args:
+        assets (pd.DataFrame): The asset data.
+        radius (float): The radius for searching earthquake data.
+        minimum_magnitude (float): The minimum magnitude of the earthquakes to include.
+        end_date (datetime): The end date for the earthquake data search.
+
+    Returns:
+        pd.DataFrame: The earthquake data for multiple locations.
+    """
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    pd = loop.run_until_complete(
+        get_earthquake_data_for_multiple_locations_async(
+            assets=assets,
+            radius=radius,
+            minimum_magnitude=minimum_magnitude,
+            end_date=end_date,
+        )
+    )
+
+    return pd
