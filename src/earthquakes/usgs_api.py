@@ -1,5 +1,6 @@
 import asyncio
 from io import StringIO
+import io
 from typing import Optional
 from math import isclose
 from urllib.request import Request, urlopen
@@ -259,10 +260,8 @@ async def get_earthquake_data_for_location(
 
             # Convert the csv data to a pandas dataframe
             df = pd.read_csv(
-                StringIO.StringIO(csv_data),
+                io.StringIO(csv_data),
             )
-
-            df.print()
 
             return df
 
@@ -295,9 +294,20 @@ async def get_earthquake_data_for_multiple_locations_async(
             )
         )
 
-        asyncio.wait(location_requests)
+    # Use asyncio.gather to concurrently execute all coroutines
+    data_list = await asyncio.gather(*location_requests)
 
-        return pd.concat(location_requests)
+    # Remove empty DataFrames from the list
+    non_empty_data = [df for df in data_list if not df.empty]
+
+    if not non_empty_data:
+        return pd.DataFrame()  # Return an empty DataFrame if all were empty
+
+    # Reset index of each DataFrame before concatenating
+    for df in non_empty_data:
+        df.reset_index(drop=True, inplace=True)
+
+    return pd.concat(non_empty_data, ignore_index=True)
 
 
 def get_earthquake_data_for_multiple_locations(
@@ -316,15 +326,11 @@ def get_earthquake_data_for_multiple_locations(
         pd.DataFrame: The earthquake data for multiple locations.
     """
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    pd = loop.run_until_complete(
-        get_earthquake_data_for_multiple_locations_async(
-            assets=assets,
-            radius=radius,
-            minimum_magnitude=minimum_magnitude,
-            end_date=end_date,
-        )
+    df = get_earthquake_data_for_multiple_locations_async(
+        assets=assets,
+        radius=radius,
+        minimum_magnitude=minimum_magnitude,
+        end_date=end_date,
     )
 
-    return pd
+    return df
