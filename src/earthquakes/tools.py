@@ -138,6 +138,6 @@ def compute_burning_cost(payouts: pd.Series, start_year: int, end_year: int) -> 
     Returns:
         float: The average burning cost for the given range of years.
     """
-    df = payouts.loc[start_year:end_year] / 100.0
+    df = payouts.loc[start_year:end_year]
 
-    return df.mean()
+    return df.sum() / (end_year - start_year + 1)
