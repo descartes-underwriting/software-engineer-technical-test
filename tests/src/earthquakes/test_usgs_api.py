@@ -72,6 +72,9 @@ def test_valid_parameters(valid_parameters: tuple) -> None:
 
     start_date = end_date - relativedelta(years=200)
 
+    if end_date > datetime(2021, 10, 21):
+        end_date = datetime(2021, 10, 21)
+
     assert parse_qs(parse_result.query) == {
         "format": ["csv"],
         "starttime": [start_date.isoformat()],

@@ -116,7 +116,6 @@ def compute_payouts(earthquake_data: pd.DataFrame, payout_structure: list) -> pd
     payouts = df[[TIME_COLUMN, "potential_payout"]][df["potential_payout"] > 0]
 
     # Convert the TIME_COLUMN to just the year
-
     payouts[TIME_COLUMN] = pd.to_datetime(payouts[TIME_COLUMN]).dt.year
 
     # Select just maximum payout per year

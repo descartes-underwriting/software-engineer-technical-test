@@ -3,14 +3,14 @@ from io import StringIO
 import io
 from typing import Optional
 from math import isclose
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode, urljoin
 import aiohttp
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import pandas as pd
-import numpy as np
-import csv
+import logging
 
 from earthquakes.tools import (
     TIME_COLUMN,
@@ -79,7 +79,7 @@ def build_api_url(
     In this case the METHOD is `query`.
     Query parameters:
         - format: csv (for easier conversion to dataframe)
-        - endtime: 21-10-2021 (later events should not be considered) TODO: this conflicts with end_date input parameter
+        - endtime: 21-10-2021 (later events should not be considered)
         - latitude: Decimal [-90,90] degrees
         - longitude: Decimal [-180,180] degrees
         - maxradiuskm: Decimal [0, 20001.6] km
@@ -87,8 +87,7 @@ def build_api_url(
         - eventtype: earthquake
         - minsig ? TODO: is this useful
         - reviewstatus ? Same as above
-        - limit: limit the request: Integer [1,20000]. TODO: implement repeat call functionality
-        TODO: check the other parameters
+        - limit: limit the request: Integer [1,20000].
     NOTE: Query method Parameters should be submitted as key=value pairs using the HTTP GET method
     and may not be specified more than once; if a parameter is submitted multiple times the result is undefined.
 
@@ -105,11 +104,19 @@ def build_api_url(
         or value_in_range(longitude, -180.0, 180.0) == False
         or value_in_range(radius, 0.0, 20001.6) == False
     ):
-        # TODO: add logging
+        logging.error(
+            f"Invalid input parameters: latitude={latitude}, longitude={longitude}, radius={radius}"
+        )
         return None
 
-    # Get the data for the last 200 years
+    # Get the data for the previous 200 years
     start_date = end_date - relativedelta(years=200)
+
+    if end_date > datetime(2021, 10, 21):
+        logging.info(
+            f"Restricting `end date` to 2021-10-21 instead of the requested {end_date}"
+        )
+        end_date = datetime(2021, 10, 21)
 
     # build parameters
     params = {
@@ -178,10 +185,12 @@ def get_earthquake_data(
         # Convert the csv data to a pandas dataframe
         df = pd.read_csv(io.StringIO(csv_data), header=0)
 
+    except HTTPError as he:
+        logging.error(f"HTTP error occurred: {he}")
+        return pd.DataFrame()
+
     except Exception as e:
-        # TODO: targeted exception handling
-        # TODO: logging the exception for debugging: log.debug ...
-        print(f"An error occurred: {e}")
+        logging.error(f"An exception occurred in `get_earthquake_data`: {e}")
         return pd.DataFrame()
 
     return df
@@ -231,14 +240,28 @@ async def get_earthquake_data_for_location(
 
     url = request.full_url
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            csv_data = await response.text(encoding=DATA_ENCODING)
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                csv_data = await response.text(encoding=DATA_ENCODING)
 
-            # Convert the csv data to a pandas dataframe
-            df = pd.read_csv(io.StringIO(csv_data))
+                # Convert the csv data to a pandas dataframe
+                df = pd.read_csv(io.StringIO(csv_data))
 
-            return df
+                if df.empty:
+                    logging.debug(
+                        f"No earthquake data found for {latitude}, {longitude}"
+                    )
+
+                return df
+
+    except aiohttp.ClientResponseError as cre:
+        logging.error(f"HTTP error occurred: {cre}")
+        return pd.DataFrame()
+
+    except Exception as e:
+        logging.error(f"An exception occurred: {e}")
+        return pd.DataFrame()
 
 
 async def get_earthquake_data_for_multiple_locations_async(
@@ -256,33 +279,39 @@ async def get_earthquake_data_for_multiple_locations_async(
     Returns:
         pd.DataFrame: A DataFrame containing the earthquake data for the specified locations.
     """
-    location_requests = []
 
-    for asset in assets.itertuples():
-        location_requests.append(
-            get_earthquake_data_for_location(
-                latitude=asset.latitude,
-                longitude=asset.longitude,
-                radius=radius,
-                minimum_magnitude=minimum_magnitude,
-                end_date=end_date,
-            )
+    # Create a list of requests for each asset based on the location.
+    # Use `itertuples` to create a named tuple for each asset and use that as the input for the
+    # get_earthquake_data_for_location function
+    location_requests = [
+        get_earthquake_data_for_location(
+            latitude=asset.latitude,
+            longitude=asset.longitude,
+            radius=radius,
+            minimum_magnitude=minimum_magnitude,
+            end_date=end_date,
         )
+        for asset in assets.itertuples()
+    ]
 
-    # Use asyncio.gather to concurrently execute all coroutines
+    # Use `asyncio.gather` to concurrently execute all coroutines
     data_list = await asyncio.gather(*location_requests)
 
-    # Remove empty DataFrames from the list
+    # Remove the empty DataFrames from the list
     non_empty_data = [df for df in data_list if not df.empty]
 
     if not non_empty_data:
         return pd.DataFrame()  # Return an empty DataFrame if all were empty
 
-    # Reset index of each DataFrame before concatenating
-    for df in non_empty_data:
-        df.reset_index(drop=True, inplace=True)
+    # Combine the non-empty DataFrames into a single DataFrame.
+    # Remove duplicates based on the `id` column.
+    # Reset the index of the DataFrame
 
-    return pd.concat(non_empty_data, ignore_index=True)
+    return (
+        pd.concat(non_empty_data, ignore_index=True)
+        .drop_duplicates(subset="id", keep="first", ignore_index=True)
+        .reset_index(drop=True)
+    )
 
 
 def get_earthquake_data_for_multiple_locations(
