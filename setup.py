@@ -71,7 +71,7 @@ python_version = get_python_version()
 
 setuptools.setup(
     name=package_name,
-    version="dev",
+    version="0.0.dev",
     author="Descartes Underwriting SAS",
     author_email="alexandre.cameron@descartesunderwriting.com",
     description=description,
