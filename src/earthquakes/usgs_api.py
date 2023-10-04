@@ -117,3 +117,49 @@ async def get_for_session_df_from_api(url, session):
     except aiohttp.ClientError as e:
         print(f'Error fetching data from {url}: {e}')
         return pd.DataFrame()
+
+
+async def get_earthquake_data_for_multiple_locations(assets,
+                                                     radius,
+                                                     minimum_magnitude,
+                                                     end_date):
+    """
+    Function used to get Earthquakes data for different positions
+
+    param assets: Dataframe containing the longitude and latitude of the studied positions
+    type: pd.DataFrame
+    param radius: Radius to be studied aroud the given position
+    type: float
+    param minimum_magnitude: Minimum earthquake magnitude to be considered
+    type: float
+    param end_date: datetime of the end of the studied period
+    type: datetime
+
+    :return df: : a DataFrame containing the earthquake data fetched
+                  from all given positions.
+    :rtype: pd.DataFrame
+    """
+
+    # Create the URLS based on the given assets: longitude, latitude
+    # save them in the api_urls list
+    api_urls = []
+    for _, row in assets.iterrows():
+        latitude = row["latitude"]
+        longitude = row["longitude"]
+        api_urls.append(
+            build_api_url(latitude, longitude, radius, end_date, minimum_magnitude)
+        )
+
+    # Retreive the df from each given url using async
+    async with aiohttp.ClientSession() as session:
+        tasks = [get_for_session_df_from_api(url, session) for url in api_urls]
+        df_list = await asyncio.gather(*tasks)
+
+
+    # Filter out empty DataFrames from the list
+    non_empty_df_list = [x for x in df_list if not x.empty]
+
+    # Concat the retreived df in a single df
+    earthquakes_data = pd.concat(
+        non_empty_df_list, ignore_index=True).drop_duplicates(keep="first")
+    return earthquakes_data
