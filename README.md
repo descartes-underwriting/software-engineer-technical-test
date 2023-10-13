@@ -6,15 +6,26 @@ All instructions can be found in the notebook [earthquake-risk-greece.ipynb](htt
 
 ## Submission
 
-The solution to this test (the source code, the test code and the notebook with its outputs) should be saved on a private `descartes-soft-eng` repository on your github account.
+If something is not clear, you can ask questions to the recruiter.
 
-Access should be granted to all members of the [descartes-underwriting group](https://github.com/orgs/descartes-underwriting/people).
+When submitting your project, your version should **not be draft** but complete and following best practices.
 
-Especially:
+The solution should be saved on a **private** `descartes-soft-eng` repository on your github account.
 
-* <https://github.com/alexandreCameron>
-* <https://github.com/mt94>
-* <https://github.com/thmsbernardi>
-* <https://github.com/f-combes>
-* <https://github.com/michruggeri>
-* <https://github.com/cedricadam2>
+The solution should include:
+
+- source code
+- test code
+- notebooks **with outputs**
+
+When the final version is ready:
+
+1. Send an email to the recruiter indicating that you finished the project and sharing the url of the project
+2. Grant access to:
+
+- <https://github.com/alexandreCameron>
+- <https://github.com/mt94>
+- <https://github.com/thmsbernardi>
+- <https://github.com/f-combes>
+- <https://github.com/michruggeri>
+- <https://github.com/cedricadam2>
