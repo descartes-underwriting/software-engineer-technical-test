@@ -26,6 +26,7 @@ When the final version is ready:
 - <https://github.com/alexandreCameron>
 - <https://github.com/mt94>
 - <https://github.com/thmsbernardi>
+- <https://github.com/jazztekk>
 - <https://github.com/f-combes>
 - <https://github.com/michruggeri>
 - <https://github.com/cedricadam2>
