@@ -24,7 +24,6 @@ When the final version is ready:
 2. Grant access to:
 
 - <https://github.com/alexandreCameron>
-- <https://github.com/mt94>
 - <https://github.com/thmsbernardi>
 - <https://github.com/jazztekk>
 - <https://github.com/f-combes>
@@ -33,3 +32,5 @@ When the final version is ready:
 - <https://github.com/missou33>
 - <https://github.com/antoineChancel>
 - <https://github.com/JulieProst>
+- <https://github.com/jbarnoud>
+
