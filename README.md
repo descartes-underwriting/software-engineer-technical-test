@@ -30,3 +30,6 @@ When the final version is ready:
 - <https://github.com/f-combes>
 - <https://github.com/michruggeri>
 - <https://github.com/cedricadam2>
+- <https://github.com/missou33>
+- <https://github.com/antoineChancel>
+- <https://github.com/JulieProst>
